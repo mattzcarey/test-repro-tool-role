@@ -63,19 +63,30 @@ export default {
 
       // Build assistant UIMessage with tool parts (like our session-memory example does)
       const parts: UIMessage["parts"] = [];
+      const debugToolCalls: unknown[] = [];
       for (const step of result.steps) {
         for (const tc of step.toolCalls) {
           const tr = step.toolResults.find((r) => r.toolCallId === tc.toolCallId);
+          debugToolCalls.push({
+            toolName: tc.toolName,
+            toolCallId: tc.toolCallId,
+            input: tc.input,
+            inputType: typeof tc.input,
+            inputKeys: tc.input ? Object.keys(tc.input as Record<string, unknown>) : null,
+            resultValue: tr?.result,
+            resultType: typeof tr?.result,
+          });
           parts.push({
             type: "dynamic-tool",
             toolName: tc.toolName,
             toolCallId: tc.toolCallId,
             state: tr ? "output-available" : "input-available",
-            input: tc.args,
-            ...(tr ? { output: tr.result } : {}),
+            input: tc.input,
+            ...(tr ? { output: tr.output } : {}),
           } as unknown as UIMessage["parts"][number]);
         }
       }
+      console.log("TOOL CALLS DEBUG:", JSON.stringify(debugToolCalls, null, 2));
       if (result.text) {
         parts.push({ type: "text", text: result.text });
       }
@@ -150,13 +161,20 @@ export default {
     }
 
     // Direct test: send tool role messages via raw ai.run to see what format works
-    // Dump the full model messages that would be sent
+    // Dump the full model messages and raw UIMessage parts
     if (url.pathname === "/model-msgs") {
       if (history.length === 0) {
         return Response.json({ error: "Run /turn1 first" }, { status: 400 });
       }
       const modelMsgs = await convertToModelMessages(history);
-      return Response.json(modelMsgs, null, 2);
+      return Response.json({
+        modelMessages: modelMsgs,
+        rawUIParts: history.map((m) => ({
+          id: m.id,
+          role: m.role,
+          parts: m.parts,
+        })),
+      }, null, 2);
     }
 
     if (url.pathname === "/raw") {
