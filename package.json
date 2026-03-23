@@ -1,0 +1,19 @@
+{
+  "name": "test-repro-tool-role",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "wrangler dev src/index.ts"
+  },
+  "dependencies": {
+    "ai": "^6.0.136",
+    "workers-ai-provider": "^3.1.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.20.0"
+  }
+}
